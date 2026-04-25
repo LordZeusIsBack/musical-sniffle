@@ -107,6 +107,8 @@ async def stream_message(
     async def event_generator():
         async for token in stream_reply(message, next_vector):
             yield f"data: {json.dumps({'token': token})}\n\n"
-        yield f"data: {json.dumps({'done': True, 'conversation_id': str(convo.id), 'vector': next_vector})}\n\n"
+
+        clean_vector = [float(val) for val in next_vector]
+        yield f"data: {json.dumps({'done': True, 'conversation_id': str(convo.id), 'vector': clean_vector})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
