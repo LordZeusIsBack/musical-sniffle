@@ -113,9 +113,14 @@ async def stream_message(
     state.vector = next_vector
     await db.commit()
 
+    message_safe = is_safe(message)
+
     async def event_generator():
-        async for token in stream_reply(message, next_vector):
-            yield f"data: {json.dumps({'token': token})}\n\n"
+        if not message_safe:
+            yield f"data: {json.dumps({'token': SAFETY_REPLY})}\n\n"
+        else:
+            async for token in stream_reply(message, next_vector):
+                yield f"data: {json.dumps({'token': token})}\n\n"
 
         clean_vector = [float(val) for val in next_vector]
         yield f"data: {json.dumps({'done': True, 'conversation_id': str(convo.id), 'vector': clean_vector})}\n\n"
