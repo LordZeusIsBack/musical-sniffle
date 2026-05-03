@@ -23,6 +23,36 @@ class SafetyClassificationError(Exception):
     """Raised when ShieldGemma cannot be reached or returns an unusable response."""
 
 
+async def _classify(message: str) -> str:
+    payload = {
+        "model": settings.safety_model,
+        "messages": [
+            {"role": "system", "content": _SAFETY_SYSTEM},
+            {"role": "user", "content": _build_user_turn(message)},
+        ],
+        "temperature": 0.0,
+        "max_tokens": 4,
+        "stream": False,
+    }
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.post(
+                f"{settings.ollama_base_url}/chat/completions",
+                json=payload,
+                headers=_HEADERS,
+            )
+            resp.raise_for_status()
+        return resp.json()["choices"][0]["message"]["content"].upper().strip()
+    except httpx.HTTPStatusError as e:
+        raise SafetyClassificationError(
+            f"ShieldGemma returned HTTP {e.response.status_code}"
+        ) from e
+    except (httpx.RequestError, KeyError, IndexError) as e:
+        raise SafetyClassificationError(
+            f"ShieldGemma unreachable or malformed response: {e}"
+        ) from e
+
+
 async def is_safe(message: str) -> bool:
     payload = {
         "model": settings.safety_model,
