@@ -6,6 +6,8 @@ import httpx
 
 from app.config import settings
 
+_HEADERS = {"Authorization": "Bearer ollama"}
+
 
 SYSTEM_PROMPT = (
     "You are a compassionate therapy support assistant. Be non-judgmental, concise, and safe. "
