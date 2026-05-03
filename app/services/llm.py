@@ -16,15 +16,8 @@ SYSTEM_PROMPT = (
 
 
 async def generate_reply(message: str, emotional_vector: list[float]) -> str:
-    if not settings.openai_api_key:
-        return (
-            "I hear you. Thank you for sharing this. Let's take one small step together: "
-            "try a slow breath in for 4 seconds, hold 4, and out for 6. "
-            f"Current emotional signal snapshot: {emotional_vector}."
-        )
-
     payload = {
-        "model": settings.openai_model,
+        "model": settings.generator_model,
         "messages": [
             {"role": "system", "content": SYSTEM_PROMPT},
             {
@@ -36,13 +29,12 @@ async def generate_reply(message: str, emotional_vector: list[float]) -> str:
             },
         ],
         "temperature": 0.5,
+        "stream": False
     }
-    headers = {"Authorization": f"Bearer {settings.openai_api_key}"}
-    async with httpx.AsyncClient(timeout=30.0) as client:
-        resp = await client.post(f"{settings.openai_base_url}/chat/completions", json=payload, headers=headers)
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        resp = await client.post(f"{settings.ollama_base_url}/chat/completions", json=payload, headers=_HEADERS)
         resp.raise_for_status()
-        data = resp.json()
-    return data["choices"][0]["message"]["content"]
+    return resp.json()["choices"][0]["message"]["content"]
 
 
 async def stream_reply(message: str, emotional_vector: list[float]) -> AsyncGenerator[str, None]:
