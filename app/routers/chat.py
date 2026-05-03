@@ -77,6 +77,14 @@ async def send_message(
     )
     state.vector = next_vector
 
+    if not await is_safe(payload.message):
+        await db.commit()
+        return ChatMessageResponse(
+            conversation_id=convo.id,
+            reply=SAFETY_REPLY,
+            emotional_vector=next_vector
+        )
+
     reply = await generate_reply(payload.message, next_vector)
 
     await db.commit()
