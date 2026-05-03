@@ -54,28 +54,11 @@ async def _classify(message: str) -> str:
 
 
 async def is_safe(message: str) -> bool:
-    payload = {
-        "model": settings.safety_model,
-        "messages": [
-            {"role": "system", "content": _SAFETY_SYSTEM},
-            {"role": "user", "message": _build_user_turn(message)}
-        ],
-        "temperature": 0.0,
-        "max_tokens": 3,
-        "stream": False
-    }
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            resp = await client.post(
-                f"{settings.ollama_base_url}/chat/completions",
-                json=payload,
-                headers=_HEADERS
-            )
-            resp.raise_for_status()
-        verdict = resp.json()['choices'][0]['message']['content'].upper().strip()
+        verdict = await _classify(message)
         return "UNSAFE" not in verdict
-    except Exception:
-        return True
+    except SafetyClassificationError as e:
+        return False
 
 
 SAFETY_REPLY = (
