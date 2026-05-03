@@ -15,6 +15,7 @@ from app.schemas import ChatMessageRequest, ChatMessageResponse, ConversationRes
 from app.services.auth import get_current_user
 from app.services.emotion import EmotionModelConfig, signal_vector, update_vector
 from app.services.llm import generate_reply, stream_reply
+from app.services.safety import SAFETY_REPLY, is_safe
 
 
 router = APIRouter(prefix="/chat", tags=["chat"])
