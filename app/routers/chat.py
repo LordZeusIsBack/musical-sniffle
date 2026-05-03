@@ -113,7 +113,7 @@ async def stream_message(
     state.vector = next_vector
     await db.commit()
 
-    message_safe = is_safe(message)
+    message_safe = await is_safe(message)
 
     async def event_generator():
         if not message_safe:
