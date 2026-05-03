@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -7,12 +9,12 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expires_minutes: int = 120
 
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/therapy_chatbot"
+    database_url: str = "postgresql+asyncpg://postgres:root@localhost:5432/therapy_chatbot"
     database_admin_url: str | None = None
 
-    openai_api_key: str = ""
-    openai_model: str = "gpt-4o-mini"
-    openai_base_url: str = "https://api.openai.com/v1"
+    ollama_base_url: str = "http://localhost:11434/v1"
+    generator_model: str = "llama3.1:8b"
+    safety_model: str = "shieldgemma:2b"
 
     decay_lambda: float = 0.1
     sensitivity_alpha: float = 0.3
