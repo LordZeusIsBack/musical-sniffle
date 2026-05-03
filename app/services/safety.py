@@ -19,6 +19,10 @@ def _build_user_turn(message: str) -> str:
     return f"<message>{message}</message>"
 
 
+class SafetyClassificationError(Exception):
+    """Raised when ShieldGemma cannot be reached or returns an unusable response."""
+
+
 async def is_safe(message: str) -> bool:
     payload = {
         "model": settings.safety_model,
