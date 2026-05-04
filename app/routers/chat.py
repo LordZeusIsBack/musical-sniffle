@@ -63,6 +63,19 @@ async def send_message(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ChatMessageResponse:
+    """
+    Handle an incoming chat message by updating the user's emotional state, performing a safety check, and returning a reply.
+    
+    Parameters:
+        payload (ChatMessageRequest): The message payload containing `message` and optional `conversation_id`. If `conversation_id` is absent, a new conversation may be created.
+    
+    Returns:
+        ChatMessageResponse: An object containing `conversation_id`, `reply` (either a generated reply or the predefined safety reply when the message is unsafe), and `emotional_vector` updated to reflect the new message.
+    
+    Side effects:
+        - Persists the updated EmotionalState.vector to the database and commits the transaction.
+        - May create a new Conversation when no conversation_id is provided.
+    """
     convo = await _resolve_conversation(db=db, user=user, conversation_id=payload.conversation_id, message=payload.message)
     state = (await db.execute(select(EmotionalState).where(EmotionalState.user_id == user.id))).scalar_one()
 
@@ -98,6 +111,18 @@ async def stream_message(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """
+    Stream a generated chat reply as Server-Sent Events while updating the user's emotional state.
+    
+    Updates the authenticated user's emotional vector based on `message` and commits the change before producing any events. If the message is considered unsafe, emits a single event containing the safety reply token; otherwise streams tokens produced by the reply generator. Always emits a final event with `done: True`, the `conversation_id`, and the updated emotional vector as a list of floats.
+    
+    Parameters:
+        message (str): The message text to send (1–4000 characters).
+        conversation_id (UUID | None): Optional conversation identifier to target or create.
+    
+    Returns:
+        StreamingResponse: An SSE stream where each event contains a JSON object with a `token` string for reply tokens (or the safety token) and a final event containing `done: True`, `conversation_id` (string), and `vector` (list of floats).
+    """
     convo = await _resolve_conversation(db=db, user=user, conversation_id=conversation_id, message=message)
     state = (await db.execute(select(EmotionalState).where(EmotionalState.user_id == user.id))).scalar_one()
 
@@ -116,6 +141,12 @@ async def stream_message(
     message_safe = await is_safe(message)
 
     async def event_generator():
+        """
+        Produce Server-Sent Events (SSE) payloads representing either a safety response, a streamed reply, and a final completion event.
+        
+        Yields:
+            SSE-formatted strings. Emits a single event containing `{'token': SAFETY_REPLY}` if the message is unsafe; otherwise emits one event per token produced by `stream_reply`. After those events, emits a final event with a JSON payload containing `done: True`, `conversation_id` (string), and `vector` (list of floats).
+        """
         if not message_safe:
             yield f"data: {json.dumps({'token': SAFETY_REPLY})}\n\n"
         else:

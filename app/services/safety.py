@@ -20,6 +20,17 @@ class SafetyClassificationError(Exception):
 
 
 async def _classify(message: str) -> str:
+    """
+    Classify a user message as `SAFE` or `UNSAFE` by querying the external safety classifier.
+    
+    Sends the message to the configured external `/chat/completions` endpoint and normalizes the classifier's single-word response to uppercase. If the external service returns an HTTP error or is unreachable, a `SafetyClassificationError` is raised. If the response is malformed or missing the expected content, the function falls back to returning `'UNSAFE'`.
+    
+    Returns:
+        verdict (str): Either `'SAFE'` or `'UNSAFE'`, uppercase.
+    
+    Raises:
+        SafetyClassificationError: If the external service returns a non-success HTTP status or the request fails.
+    """
     payload = {
         "model": settings.safety_model,
         "messages": [
@@ -55,6 +66,14 @@ async def _classify(message: str) -> str:
 
 
 async def is_safe(message: str) -> bool:
+    """
+    Determine whether a user message is classified as safe.
+    
+    If the safety classifier cannot be reached or returns an error, the message is treated as unsafe.
+    
+    Returns:
+        `true` if the classifier verdict does not contain "UNSAFE", `false` otherwise.
+    """
     try:
         verdict = await _classify(message)
         return "UNSAFE" not in verdict
