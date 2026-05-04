@@ -24,7 +24,7 @@ async def _classify(message: str) -> str:
         "model": settings.safety_model,
         "messages": [
             {"role": "system", "content": _SAFETY_SYSTEM},
-            {"role": "user", "content": _build_user_turn(message)},
+            {"role": "user", "content": message},
         ],
         "temperature": 0.0,
         "max_tokens": 4,
