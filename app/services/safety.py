@@ -38,15 +38,20 @@ async def _classify(message: str) -> str:
                 headers=_HEADERS,
             )
             resp.raise_for_status()
-        return resp.json()["choices"][0]["message"]["content"].upper().strip()
+        content = resp.json()["choices"][0]["message"]["content"]
+        if not isinstance(content, str):
+            return 'UNSAFE'
+        return content.strip().upper()
     except httpx.HTTPStatusError as e:
         raise SafetyClassificationError(
             f"ShieldGemma returned HTTP {e.response.status_code}"
         ) from e
-    except (httpx.RequestError, KeyError, IndexError) as e:
+    except httpx.RequestError as e:
         raise SafetyClassificationError(
             f"ShieldGemma unreachable or malformed response: {e}"
         ) from e
+    except (KeyError, IndexError, TypeError, AttributeError, ValueError):
+        return 'UNSAFE'
 
 
 async def is_safe(message: str) -> bool:
