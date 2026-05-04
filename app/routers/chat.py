@@ -15,6 +15,7 @@ from app.schemas import ChatMessageRequest, ChatMessageResponse, ConversationRes
 from app.services.auth import get_current_user
 from app.services.emotion import EmotionModelConfig, signal_vector, update_vector
 from app.services.llm import generate_reply, stream_reply
+from app.services.safety import SAFETY_REPLY, is_safe
 
 
 router = APIRouter(prefix="/chat", tags=["chat"])
@@ -76,6 +77,14 @@ async def send_message(
     )
     state.vector = next_vector
 
+    if not await is_safe(payload.message):
+        await db.commit()
+        return ChatMessageResponse(
+            conversation_id=convo.id,
+            reply=SAFETY_REPLY,
+            emotional_vector=next_vector
+        )
+
     reply = await generate_reply(payload.message, next_vector)
 
     await db.commit()
@@ -104,9 +113,14 @@ async def stream_message(
     state.vector = next_vector
     await db.commit()
 
+    message_safe = await is_safe(message)
+
     async def event_generator():
-        async for token in stream_reply(message, next_vector):
-            yield f"data: {json.dumps({'token': token})}\n\n"
+        if not message_safe:
+            yield f"data: {json.dumps({'token': SAFETY_REPLY})}\n\n"
+        else:
+            async for token in stream_reply(message, next_vector):
+                yield f"data: {json.dumps({'token': token})}\n\n"
 
         clean_vector = [float(val) for val in next_vector]
         yield f"data: {json.dumps({'done': True, 'conversation_id': str(convo.id), 'vector': clean_vector})}\n\n"

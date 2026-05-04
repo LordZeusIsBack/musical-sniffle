@@ -46,6 +46,7 @@ app/
     auth.py
     emotion.py
     llm.py
+    safety.py
 ```
 
 ## Setup
