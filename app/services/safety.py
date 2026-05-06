@@ -57,7 +57,7 @@ async def _classify(message: str) -> str:
 async def is_safe(message: str) -> bool:
     try:
         verdict = await _classify(message)
-        return "UNSAFE" not in verdict
+        return verdict == 'SAFE'
     except SafetyClassificationError as e:
         return False
 
