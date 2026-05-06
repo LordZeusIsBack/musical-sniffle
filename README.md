@@ -1,6 +1,6 @@
 # Therapy Chatbot Backend (FastAPI)
 
-FastAPI backend for a privacy-aware therapy chatbot that **does not store raw conversation text**. It only stores:
+FastAPI backend for a privacy-aware therapy chatbot using locally hosted LLMs via Ollama, that **does not store raw conversation text**. It only stores:
 - pseudonymous user identifiers
 - emotional state vectors (`[d, sh, s, a]`)
 - minimal conversation metadata (title + timestamps)
@@ -12,7 +12,9 @@ FastAPI backend for a privacy-aware therapy chatbot that **does not store raw co
 - Conversation management with optional `conversation_id`
 - Mathematical vector state updates with clipping and decay
 - SSE token streaming endpoint
-- OpenAI API integration via `httpx`
+- Local LLM inference via Ollama (`llama3.1:8b`)
+- Safety classification using ShieldGemma (`shieldgemma:2b`)
+- Async model communication through OpenAI-compatible Ollama endpoints using `httpx`
 
 ## Emotional Model
 
@@ -99,6 +101,7 @@ On startup, the app will:
 - No raw user messages are written to DB.
 - Users are identified with pseudonymous HMAC IDs.
 - Passwords hashed with bcrypt.
+- LLM inference is performed locally through Ollama instead of external hosted APIs.
 
 ## Streaming Example
 
