@@ -14,6 +14,16 @@ from app.routers.chat import router as chat_router
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    """Manages the application's lifespan.
+
+    Args:
+        _: The FastAPI instance, not used within the function.
+
+    Returns:
+        None
+
+    Raises:
+        DatabaseError: If there is an issue creating the database or extensions."""
     ensure_database_exists()
     async with async_engine.begin() as conn:
         await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
@@ -28,4 +38,11 @@ app.include_router(chat_router)
 
 @app.get("/health")
 async def health() -> dict[str, str]:
+    """Returns a JSON object indicating the health status of the application.
+
+    Args:
+        None
+
+    Returns:
+        A dictionary with a single key-value pair: {"status": "ok"}"""
     return {"status": "ok"}

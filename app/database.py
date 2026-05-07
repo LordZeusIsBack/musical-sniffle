@@ -12,6 +12,13 @@ AsyncSessionLocal = async_sessionmaker(async_engine, class_=AsyncSession, expire
 
 
 def _admin_url() -> str:
+    """Returns the admin URL for the database.
+
+    Args:
+        None
+
+    Returns:
+        str: The admin URL of the database."""
     if settings.database_admin_url:
         return settings.database_admin_url
     url = make_url(settings.database_url)
@@ -19,6 +26,16 @@ def _admin_url() -> str:
 
 
 def ensure_database_exists() -> None:
+    """Ensure that the database specified in settings.database_url exists.
+
+    Args:
+        None
+
+    Returns:
+        None
+
+    Raises:
+        Exception: If an error occurs while checking or creating the database."""
     target = make_url(settings.database_url)
     db_name = target.database
     admin = create_engine(_admin_url(), isolation_level="AUTOCOMMIT")
@@ -32,5 +49,15 @@ def ensure_database_exists() -> None:
 
 
 async def get_db() -> AsyncSession:
+    """Asynchronously retrieves a database session.
+
+    Args:
+        None
+
+    Returns:
+        An instance of `AsyncSession`.
+
+    Raises:
+        No exceptions are explicitly raised."""
     async with AsyncSessionLocal() as session:
         yield session

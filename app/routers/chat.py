@@ -24,6 +24,19 @@ router = APIRouter(prefix="/chat", tags=["chat"])
 async def _resolve_conversation(
     *, db: AsyncSession, user: User, conversation_id: UUID | None, message: str
 ) -> Conversation:
+    """Resolves or creates a conversation based on the provided parameters.
+
+    Args:
+        db (AsyncSession): The database session to use for querying and adding conversations.
+        user (User): The user associated with the conversation.
+        conversation_id (UUID | None): The ID of an existing conversation to resolve. If None, a new conversation is created.
+        message (str): The initial message for the conversation.
+
+    Returns:
+        Conversation: The resolved or newly created conversation.
+
+    Raises:
+        HTTPException: If the specified conversation does not exist and no valid title can be derived from the message."""
     if conversation_id:
         convo = (
             await db.execute(
@@ -45,6 +58,14 @@ async def _resolve_conversation(
 
 @router.get("/conversations", response_model=list[ConversationResponse])
 async def list_conversations(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """List conversations for the current user.
+
+    Args:
+        user (User): The authenticated user making the request.
+        db (AsyncSession): The database session dependency.
+
+    Returns:
+        list[ConversationResponse]: A list of conversation responses."""
     rows = (
         await db.execute(select(Conversation).where(Conversation.user_id == user.id).order_by(Conversation.updated_at.desc()))
     ).scalars().all()
@@ -53,6 +74,14 @@ async def list_conversations(user: User = Depends(get_current_user), db: AsyncSe
 
 @router.get("/state", response_model=EmotionalStateResponse)
 async def get_state(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)) -> EmotionalState:
+    """Get the emotional state of a user.
+
+    Args:
+        user (User): The authenticated user.
+        db (AsyncSession): The database session dependency.
+
+    Returns:
+        EmotionalState: The emotional state of the user."""
     state = (await db.execute(select(EmotionalState).where(EmotionalState.user_id == user.id))).scalar_one()
     return state
 
@@ -63,6 +92,15 @@ async def send_message(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> ChatMessageResponse:
+    """Sends a message in a conversation and updates the user's emotional state.
+
+    Args:
+        payload (ChatMessageRequest): The request containing the message details.
+        user (User): The authenticated user sending the message.
+        db (AsyncSession): The database session for database operations.
+
+    Returns:
+        ChatMessageResponse: A response containing the conversation ID, reply, and updated emotional vector."""
     convo = await _resolve_conversation(db=db, user=user, conversation_id=payload.conversation_id, message=payload.message)
     state = (await db.execute(select(EmotionalState).where(EmotionalState.user_id == user.id))).scalar_one()
 
@@ -98,6 +136,16 @@ async def stream_message(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Streams a message and processes it based on safety and conversation details.
+
+    Args:
+        message (str): The message to be processed, with a minimum length of 1 and maximum length of 4000 characters.
+        conversation_id (UUID | None): An optional UUID representing the conversation ID.
+        user (User): The current authenticated user.
+        db (AsyncSession): The database session dependency.
+
+    Returns:
+        StreamingResponse: A streaming response containing events encoded as JSON, prefixed with 'data:'."""
     convo = await _resolve_conversation(db=db, user=user, conversation_id=conversation_id, message=message)
     state = (await db.execute(select(EmotionalState).where(EmotionalState.user_id == user.id))).scalar_one()
 
@@ -116,6 +164,16 @@ async def stream_message(
     message_safe = await is_safe(message)
 
     async def event_generator():
+        """Generates a stream of events based on the message safety status and conversation details.
+
+        Args:
+            message_safe (bool): Indicates whether the message is safe to process.
+            message (str): The message to be processed.
+            next_vector (list): A list of vector values for the next step in processing.
+            convo (object): The conversation object containing relevant information.
+
+        Returns:
+            str: A string representing an event in the stream, encoded as JSON and prefixed with 'data:'."""
         if not message_safe:
             yield f"data: {json.dumps({'token': SAFETY_REPLY})}\n\n"
         else:
