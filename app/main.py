@@ -28,4 +28,10 @@ app.include_router(chat_router)
 
 @app.get("/health")
 async def health() -> dict[str, str]:
+    """
+    Indicates the service health status.
+    
+    Returns:
+        dict[str, str]: A JSON-serializable mapping with the key "status" set to "ok".
+    """
     return {"status": "ok"}

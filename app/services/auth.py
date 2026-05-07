@@ -60,6 +60,17 @@ def decode_token(token: str) -> dict:
 async def get_current_user(
     token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
 ) -> User:
+    """
+    Resolve and return the authenticated User associated with the provided OAuth2 bearer token.
+    
+    Validates and decodes the JWT from the OAuth2 token, looks up the User by the token's `sub` claim, and returns the matching User instance.
+    
+    Returns:
+        User: The authenticated user retrieved from the database.
+    
+    Raises:
+        HTTPException: 401 Unauthorized if the token is invalid or if no user matches the token's subject.
+    """
     payload = decode_token(token)
     user_id = payload.get("sub")
     stmt = select(User).where(User.id == user_id)
