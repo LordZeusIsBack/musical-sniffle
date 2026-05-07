@@ -55,15 +55,6 @@ async def _classify(message: str) -> str:
 
 
 async def is_safe(message: str) -> bool:
-    """
-    Check if a user message is classified as safe by the safety model.
-    
-    Parameters:
-        message (str): The text to be evaluated by the safety classifier.
-    
-    Returns:
-        `True` if the classifier's verdict equals `'SAFE'`, `False` otherwise. If the safety classifier cannot be reached or returns an invalid response, this function returns `False`.
-    """
     try:
         verdict = await _classify(message)
         return verdict == 'SAFE'

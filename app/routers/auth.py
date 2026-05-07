@@ -58,15 +58,6 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSessi
 
 @router.post("/logout")
 async def logout(token: str = Depends(oauth2_scheme)) -> dict[str, str]:
-    """
-    Invalidates an access token by adding its `jti` claim to the server-side blacklist.
-    
-    Parameters:
-        token (str): The OAuth2 Bearer access token to invalidate.
-    
-    Returns:
-        dict[str, str]: A confirmation dictionary containing `{'message': 'Logged out'}`.
-    """
     payload = decode_token(token)
     TOKEN_BLACKLIST.add(payload["jti"])
     return {"message": "Logged out"}

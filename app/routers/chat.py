@@ -98,17 +98,6 @@ async def stream_message(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    Stream an LLM reply token-by-token as Server-Sent Events while updating and persisting the user's emotional vector.
-    
-    If the message is unsafe, yields a single SSE event containing the predefined safety reply; otherwise streams tokens produced by the LLM. After tokens (or the safety reply) the stream emits a final SSE event with {"done": True, "conversation_id": <id>, "vector": <float list>}. This function also updates the user's EmotionalState.vector and commits that change before streaming.
-    
-    Parameters:
-        conversation_id (UUID | None): Optional conversation ID to resolve or create the target conversation.
-    
-    Returns:
-        StreamingResponse: An HTTP streaming response with media type "text/event-stream" that emits SSE-formatted JSON messages containing either `{"token": <str>}` events and a terminal `{"done": True, "conversation_id": <str>, "vector": <list[float]>}` event, or a single safety `{"token": <SAFETY_REPLY>}` event followed by the terminal event.
-    """
     convo = await _resolve_conversation(db=db, user=user, conversation_id=conversation_id, message=message)
     state = (await db.execute(select(EmotionalState).where(EmotionalState.user_id == user.id))).scalar_one()
 
@@ -127,14 +116,6 @@ async def stream_message(
     message_safe = await is_safe(message)
 
     async def event_generator():
-        """
-        Produce Server-Sent Events (SSE) messages for a single chat response stream.
-        
-        Yields SSE-formatted strings: if the input message is unsafe, one data event containing the safety reply is yielded; otherwise, successive data events are yielded for each token produced by the streaming LLM. After tokens (or the safety fallback) a final data event is yielded containing `done: True`, the `conversation_id`, and the updated emotion `vector` as floats.
-        
-        Returns:
-        	Async generator that yields SSE data lines (each a string ending with two newlines) representing token events and a final completion event.
-        """
         if not message_safe:
             yield f"data: {json.dumps({'token': SAFETY_REPLY})}\n\n"
         else:

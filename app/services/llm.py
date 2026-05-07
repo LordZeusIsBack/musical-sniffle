@@ -38,16 +38,6 @@ async def generate_reply(message: str, emotional_vector: list[float]) -> str:
 
 
 async def stream_reply(message: str, emotional_vector: list[float]) -> AsyncGenerator[str, None]:
-    """
-    Yield the generated reply as a sequence of whitespace-preserving token segments.
-    
-    Parameters:
-        message (str): Prompt text sent to the generator.
-        emotional_vector (list[float]): Numeric vector representing detected emotional features to include with the prompt.
-    
-    Returns:
-        AsyncGenerator[str, None]: An async generator that yields each whitespace-separated token from the model's reply followed by a single space.
-    """
     reply = await generate_reply(message=message, emotional_vector=emotional_vector)
     for token in reply.split():
         yield token + " "

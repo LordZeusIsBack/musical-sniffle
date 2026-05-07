@@ -76,20 +76,6 @@ def signal_vector(text: str) -> list[float]:
 
 
 def update_vector(current: list[float], signal: list[float], cfg: EmotionModelConfig) -> list[float]:
-    """
-    Update an emotion state vector by blending the existing state with a new signal using the model configuration.
-    
-    Parameters:
-        current (list[float]): Current emotion state vector.
-        signal (list[float]): Incoming signal vector to apply.
-        cfg (EmotionModelConfig): Configuration holding `decay_lambda` (controls retention) and `sensitivity_alpha` (controls signal influence).
-    
-    Returns:
-        list[float]: New emotion state vector with each element clipped to the range [-1.0, 1.0].
-    
-    Raises:
-        ValueError: If `current` and `signal` have different lengths.
-    """
     lam = _clip(cfg.decay_lambda, 0.05, 0.2)
     alpha = _clip(cfg.sensitivity_alpha, 0.1, 0.5)
 
