@@ -32,5 +32,11 @@ def ensure_database_exists() -> None:
 
 
 async def get_db() -> AsyncSession:
+    """
+    Provide an async SQLAlchemy session for database operations suitable for use as a dependency.
+    
+    Returns:
+        AsyncSession: An active AsyncSession instance yielded for use; the session is scoped to the caller's context.
+    """
     async with AsyncSessionLocal() as session:
         yield session
