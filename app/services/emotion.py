@@ -37,19 +37,13 @@ Returns:
     return 0.0
 
 def negativity_score(text: str) -> float:
-    '''Calculate the negativity score of a given text.
+    """Calculate the negativity score of a given text.
 
 Args:
     text (str): The input text to analyze for negativity.
 
 Returns:
-    float: A value between 0.0 and 1.0 representing the negativity score.
-"""
-
-def negativity_score(text: str) -> float:
-    txt = text.lower()
-    matches = sum((1 for phrase in NEGATIVE_PHRASES if phrase in txt))
-    return _clip(matches / 4.0, 0.0, 1.0)'''
+    float: A value between 0.0 and 1.0 representing the negativity score."""
     txt = text.lower()
     matches = sum((1 for phrase in NEGATIVE_PHRASES if phrase in txt))
     return _clip(matches / 4.0, 0.0, 1.0)
@@ -68,14 +62,13 @@ Returns:
     return _clip(matches / 3.0, 0.0, 1.0)
 
 def signal_vector(text: str) -> list[float]:
-    '''Computes a signal vector based on the text input.
+    """Computes a signal vector based on the text input.
 
 Args:
     text (str): The input text to analyze.
 
 Returns:
-    list[float]: A list of four float values representing the signal in different axes.
-"""'''
+    list[float]: A list of four float values representing the signal in different axes."""
     sentiment = polarity_score(text)
     negativity = negativity_score(text)
     signal = []

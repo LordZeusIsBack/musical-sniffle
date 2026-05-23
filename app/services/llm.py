@@ -6,7 +6,7 @@ _HEADERS = {'Authorization': 'Bearer ollama'}
 SYSTEM_PROMPT = 'You are a compassionate therapy support assistant. Be non-judgmental, concise, and safe. If user expresses imminent self-harm/suicide risk, encourage contacting emergency services or a crisis line.'
 
 async def generate_reply(message: str, emotional_vector: list[float]) -> str:
-    '''Generates a reply to a user message based on the provided emotional vector.
+    """Generates a reply to a user message based on the provided emotional vector.
 
 Args:
     message (str): The user's input message.
@@ -14,10 +14,9 @@ Args:
 
 Returns:
     str: The generated reply from the model.
-"""
 
-# Raises:
-#     httpx.HTTPStatusError: If the HTTP request returns an unsuccessful status code.'''
+Raises:
+    httpx.HTTPStatusError: If the HTTP request returns an unsuccessful status code."""
     payload = {'model': settings.generator_model, 'messages': [{'role': 'system', 'content': SYSTEM_PROMPT}, {'role': 'user', 'content': f'User message (do not repeat verbatim): {message}\nEmotional state vector: {emotional_vector}'}], 'temperature': 0.5, 'stream': False}
     async with httpx.AsyncClient(timeout=60.0) as client:
         resp = await client.post(f'{settings.ollama_base_url}/chat/completions', json=payload, headers=_HEADERS)

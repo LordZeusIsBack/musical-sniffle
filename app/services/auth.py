@@ -48,29 +48,13 @@ Returns:
     return digest
 
 def create_access_token(subject: str) -> str:
-    '''Generates a JWT access token for the given subject.
+    """Generates a JWT access token for the given subject.
 
 Args:
     subject (str): The subject of the token, typically a user identifier.
 
 Returns:
-    str: A JWT access token encoded with specified payload and secret.
-"""
-
-import datetime
-from datetime import timedelta
-import uuid
-from jose import jwt
-from settings import settings
-
-now = datetime.datetime.now(datetime.timezone.utc)
-payload = {
-    'sub': subject,
-    'jti': str(uuid.uuid4()),
-    'iat': int(now.timestamp()),
-    'exp': int((now + timedelta(minutes=settings.jwt_expires_minutes)).timestamp())
-}
-return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)'''
+    str: A JWT access token encoded with specified payload and secret."""
     now = datetime.now(timezone.utc)
     payload = {'sub': subject, 'jti': str(uuid.uuid4()), 'iat': int(now.timestamp()), 'exp': int((now + timedelta(minutes=settings.jwt_expires_minutes)).timestamp())}
     return jwt.encode(payload, settings.jwt_secret, algorithm=settings.jwt_algorithm)
