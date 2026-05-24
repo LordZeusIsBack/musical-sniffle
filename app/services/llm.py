@@ -18,7 +18,7 @@ Returns:
 Raises:
     httpx.HTTPStatusError: If the HTTP request returns an unsuccessful status code."""
     payload = {'model': settings.generator_model, 'messages': [{'role': 'system', 'content': SYSTEM_PROMPT}, {'role': 'user', 'content': f'User message (do not repeat verbatim): {message}\nEmotional state vector: {emotional_vector}'}], 'temperature': 0.5, 'stream': False}
-    async with httpx.AsyncClient(timeout=60.0) as client:
+    async with httpx.AsyncClient(timeout=300.0) as client:
         resp = await client.post(f'{settings.ollama_base_url}/chat/completions', json=payload, headers=_HEADERS)
         resp.raise_for_status()
     return resp.json()['choices'][0]['message']['content']
