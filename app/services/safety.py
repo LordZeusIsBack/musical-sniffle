@@ -1,7 +1,7 @@
 import httpx
 from app.config import settings
 _HEADERS = {'Authorization': 'Bearer ollama'}
-_SAFETY_SYSTEM = 'You are a content safety classifier. Your only task is to decide whether the user message below violates any of these policies:\n  • Hate speech or discrimination targeting individuals or groups\n  • Harassment, threats, or targeted abuse\n  • Dangerous instructions (weapons, self-harm methods, illegal acts)\n\nRespond with EXACTLY one word — either SAFE or UNSAFE — and nothing else.'
+_SAFETY_SYSTEM = 'You are a content safety classifier. Your only task is to decide whether the user message below violates any of these policies:\n  • Hate speech or discrimination targeting individuals or groups\n  • Harassment, threats, or targeted abuse\n  • Dangerous instructions (weapons, self-harm methods, illegal acts)\n\nRespond with EXACTLY one word: "Yes" if it violates the policies, or "No" if it is safe.'
 
 class SafetyClassificationError(Exception):
     """Raised when ShieldGemma cannot be reached or returns an unusable response."""
@@ -20,7 +20,7 @@ Raises:
     SafetyClassificationError: If the response from ShieldGemma is unreachable or malformed."""
     payload = {'model': settings.safety_model, 'messages': [{'role': 'system', 'content': _SAFETY_SYSTEM}, {'role': 'user', 'content': message}], 'temperature': 0.0, 'max_tokens': 4, 'stream': False}
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             resp = await client.post(f'{settings.ollama_base_url}/chat/completions', json=payload, headers=_HEADERS)
             resp.raise_for_status()
         content = resp.json()['choices'][0]['message']['content']
@@ -44,7 +44,8 @@ Returns:
     bool: True if the message is classified as safe, False otherwise."""
     try:
         verdict = await _classify(message)
-        return verdict == 'SAFE'
+        return 'SAFE' in verdict or 'NO' in verdict
     except SafetyClassificationError as e:
+        print(f"Safety check failed: {e}")
         return False
 SAFETY_REPLY = "I'm not able to respond to that message. If you're in crisis or danger, please reach out for immediate support:\n\n• **AASRA**: +91-9820466726 (24/7)\n• **Kiran Mental Health Helpline**: 1800-599-0019 (24/7, Govt. of India)\n• **Snehi Foundation**: +91-22-2772-6771\n• **iCALL (TISS)**: +91-9152987821 (Mon–Sat, 10am–8pm)\n• **Vandrevala Foundation Helpline**: 9999 666 555 or 1860 2662 345\n• **Find more resources**: https://findahelpline.com/\n\nYou don't have to face this alone."
