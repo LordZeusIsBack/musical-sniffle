@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     database_admin_url: str | None = None
 
     ollama_base_url: str = "http://localhost:11434/v1"
-    generator_model: str = "llama3.1:8b"
+    generator_model: str = "llama3.1:8b-instruct-q4_K_M"
     safety_model: str = "shieldgemma:2b"
 
     decay_lambda: float = 0.1
