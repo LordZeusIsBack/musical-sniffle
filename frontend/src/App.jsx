@@ -1,6 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "./components/Login";
-import Signup from "./components/Signup";
+import AuthPage from "./components/AuthPage";
 import Chat from "./components/Chat";
 
 function PrivateRoute({ children }) {
@@ -8,41 +7,39 @@ function PrivateRoute({ children }) {
   return token ? children : <Navigate to="/login" replace />;
 }
 
+export default function App() {
+  return (
+    <Routes>
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <AuthPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/signup"
+        element={
+          <PublicRoute>
+            <AuthPage />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/chat"
+        element={
+          <PrivateRoute>
+            <Chat />
+          </PrivateRoute>
+        }
+      />
+      <Route path="*" element={<Navigate to="/chat" replace />} />
+    </Routes>
+  );
+}
+
 function PublicRoute({ children }) {
   const token = localStorage.getItem("token");
   return token ? <Navigate to="/chat" replace /> : children;
-}
-
-export default function App() {
-  return (
-    <div className="app">
-      <Routes>
-        <Route
-          path="/login"
-          element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          }
-        />
-        <Route
-          path="/signup"
-          element={
-            <PublicRoute>
-              <Signup />
-            </PublicRoute>
-          }
-        />
-        <Route
-          path="/chat"
-          element={
-            <PrivateRoute>
-              <Chat />
-            </PrivateRoute>
-          }
-        />
-        <Route path="*" element={<Navigate to="/chat" replace />} />
-      </Routes>
-    </div>
-  );
 }

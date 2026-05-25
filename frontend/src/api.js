@@ -65,16 +65,6 @@ export async function sendMessage(message, conversationId = null) {
   });
 }
 
-export function streamMessage(message, conversationId = null) {
-  const token = getToken();
-  let url = `/chat/stream?message=${encodeURIComponent(message)}`;
-  if (conversationId) url += `&conversation_id=${conversationId}`;
-
-  return new EventSource(url, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-}
-
 export function buildStreamUrl(message, conversationId = null) {
   let url = `/chat/stream?message=${encodeURIComponent(message)}`;
   if (conversationId) url += `&conversation_id=${conversationId}`;

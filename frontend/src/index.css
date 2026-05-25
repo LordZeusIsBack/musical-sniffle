@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Design tokens ─── */
+:root {
+  --color-bg: #faf5f0;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f7f0e8;
+  --color-border: #ede5dd;
+  --color-text: #2d2b2a;
+  --color-text-muted: #9c928c;
+  --color-primary: #7ba88f;
+  --color-primary-hover: #6b9a7d;
+  --color-accent: #a3c4d6;
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-glow: 0 0 20px rgba(123, 168, 143, 0.15);
+}
+
+/* ─── Dark mode ─── */
+.dark {
+  --color-bg: #1a1c1e;
+  --color-surface: #26282b;
+  --color-surface-hover: #2e3033;
+  --color-border: #36302a;
+  --color-text: #e8e4df;
+  --color-text-muted: #8a807a;
+  --color-primary: #8fc0a3;
+  --color-primary-hover: #a0ceb2;
+  --color-accent: #7fafcc;
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.2);
+  --shadow-elevated: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Base ─── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+  height: 100vh;
+  overflow: hidden;
+}
+
+#root {
+  height: 100vh;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
+
+/* ─── Message animations ─── */
+@keyframes messageIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-message-in {
+  animation: messageIn 0.3s ease-out;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.cursor-blink::after {
+  content: "";
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--color-primary);
+  margin-left: 2px;
+  animation: cursorBlink 1s step-end infinite;
+  vertical-align: text-bottom;
+}
+
+/* ─── Typing dots ─── */
+@keyframes typingDot {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.3; }
+  40% { transform: scale(1); opacity: 1; }
+}
+.typing-dot {
+  animation: typingDot 1.4s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+/* ─── Auth illustration blob animation ─── */
+@keyframes blobFloat {
+  0%, 100% { border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%; }
+  25% { border-radius: 58% 42% 75% 25% / 76% 46% 54% 24%; }
+  50% { border-radius: 50% 50% 33% 67% / 55% 27% 73% 45%; }
+  75% { border-radius: 33% 67% 58% 42% / 63% 68% 32% 37%; }
+}
+.auth-blob {
+  animation: blobFloat 12s ease-in-out infinite;
+}
+
+/* ─── Transitions ─── */
+.page-enter {
+  opacity: 0;
+  transform: translateY(8px);
+}
+.page-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
