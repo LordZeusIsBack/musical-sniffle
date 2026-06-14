@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     decay_lambda: float = 0.1
     sensitivity_alpha: float = 0.3
 
+    enable_dp: bool = False
+    dp_noise_sigma: float = 0.01
+    high_risk_threshold: float = 0.60
+    critical_risk_threshold: float = 0.85
+
     pseudonym_hmac_key: str = "pseudonym-key"
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")

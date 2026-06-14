@@ -42,3 +42,40 @@ class ConversationResponse(BaseModel):
 class EmotionalStateResponse(BaseModel):
     vector: list[float]
     updated_at: datetime
+
+
+class EmotionalSnapshotResponse(BaseModel):
+    id: UUID
+    timestamp: datetime
+    vector: list[float]
+    mode: str
+    risk_score: float
+
+
+class HistoryResponse(BaseModel):
+    history: list[EmotionalSnapshotResponse]
+
+
+class TrendsResponse(BaseModel):
+    trend: str
+    momentum: dict[str, list[float]]
+    moving_average: list[float]
+    volatility: float
+
+
+class RiskResponse(BaseModel):
+    score: float
+    level: str
+
+
+class ExplanationResponse(BaseModel):
+    id: UUID
+    created_at: datetime
+    trace: dict
+
+
+class EventResponse(BaseModel):
+    id: UUID
+    timestamp: datetime
+    event_type: str
+    payload: dict
