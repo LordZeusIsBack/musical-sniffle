@@ -41,7 +41,7 @@ load_models:
 
 # Run the FastAPI backend server
 backend: load_models
-	uvicorn app.main:app --reload
+	uv run uvicorn app.main:app --reload
 
 # Run the frontend development server
 frontend:
