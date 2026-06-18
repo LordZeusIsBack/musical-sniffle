@@ -44,7 +44,7 @@ async def _resolve_conversation(*, db: AsyncSession, user: User, conversation_id
 
 async def _process_message(db: AsyncSession, user: User, message: str) -> tuple[list[float], str, str, list[str], bool, object]:
     state = (await db.execute(select(EmotionalState).where(EmotionalState.user_id == user.id))).scalar_one()
-    previous = list(state.vector)
+    previous = [float(x) for x in state.vector]
     classifier_result = _classifier.classify(message)
     signal = signal_vector(message)
     hybrid_signal = [(a + b) / 2 for a, b in zip(signal, classifier_result["vector"], strict=True)]
