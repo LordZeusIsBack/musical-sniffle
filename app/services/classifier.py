@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.services.emotion import keyword_score, polarity_score
+from app.services.emotion import keyword_score
 
 LABEL_TO_VECTOR: dict[str, list[float]] = {
     "sadness": [0.7, 0.1, 0.1, 0.2],
@@ -12,21 +12,44 @@ LABEL_TO_VECTOR: dict[str, list[float]] = {
 
 
 class EmotionClassifier:
-    """Hybrid local classifier facade for distilroberta-base-emotion with keyword fallback."""
+    """Hybrid local classifier facade for DeBERTa-v3-small-mnli-fever-docnli-ling-2c with keyword fallback."""
+
+    def __init__(self) -> None:
+        self._pipe = None
+
+    def _get_pipeline(self) -> object:
+        if self._pipe is None:
+            import torch
+            from transformers import pipeline
+
+            model_path = r"C:\Users\ASUS\.hf_models\DeBERTa-v3-small-mnli-fever-docnli-ling-2c"
+            device = 0 if torch.cuda.is_available() else -1
+            self._pipe = pipeline(
+                "zero-shot-classification",
+                model=model_path,
+                device=device
+            )
+        return self._pipe
 
     def classify(self, text: str) -> dict[str, object]:
-        lowered = text.lower()
-        if any(term in lowered for term in ("panic", "anxious", "fear", "worry")):
-            label = "fear"
-        elif any(term in lowered for term in ("angry", "furious", "rage")):
-            label = "anger"
-        elif polarity_score(text) > 0:
-            label = "joy"
-        elif any(term in lowered for term in ("sad", "hopeless", "empty", "depressed")):
-            label = "sadness"
-        else:
-            label = "neutral"
-        mapped = LABEL_TO_VECTOR[label].copy()
+        pipe = self._get_pipeline()
+        candidate_labels = ["sadness", "anger", "fear", "joy", "neutral"]
+        hypothesis_template = "This text expresses {}."
+
+        # Run zero-shot classification
+        res = pipe(text, candidate_labels, hypothesis_template=hypothesis_template)
+
+        # Get top predicted label and individual scores
+        predicted_label = res["labels"][0]
+        scores = dict(zip(res["labels"], res["scores"]))
+
+        # Map to vector and apply safety/suicide boosting
+        mapped = LABEL_TO_VECTOR[predicted_label].copy()
         mapped[1] = max(mapped[1], keyword_score(text, "sh"))
         mapped[2] = max(mapped[2], keyword_score(text, "s"))
-        return {"label": label, "scores": {label: 1.0}, "vector": mapped}
+
+        return {
+            "label": predicted_label,
+            "scores": scores,
+            "vector": mapped,
+        }
