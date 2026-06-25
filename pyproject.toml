@@ -19,4 +19,8 @@ dependencies = [
     "python-multipart>=0.0.26",
     "sqlalchemy[asyncio]==2.0.40",
     "uvicorn[standard]==0.34.2",
+    "transformers",
+    "torch",
+    "sentencepiece",
+    "protobuf",
 ]
