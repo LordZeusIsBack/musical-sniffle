@@ -52,14 +52,29 @@ export async function listConversations() {
   return request("/chat/conversations");
 }
 
+/**
+ * Gets the current emotional state.
+ * @return {object} The JSON response from the `/chat/state` endpoint.
+ */
 export async function getEmotionalState() {
   return request("/chat/state");
 }
 
+/**
+ * Retrieves messages for a conversation.
+ * @param {string|number} conversationId - The conversation identifier.
+ * @return {Promise<any>} The messages response.
+ */
 export async function getMessages(conversationId) {
   return request(`/chat/${conversationId}/messages`);
 }
 
+/**
+ * Sends a chat message.
+ * @param {string} message - The message text to send.
+ * @param {string|null} [conversationId=null] - The conversation to associate with the message.
+ * @return {Promise<any>} The JSON response.
+ */
 export async function sendMessage(message, conversationId = null) {
   const body = { message };
   if (conversationId) body.conversation_id = conversationId;

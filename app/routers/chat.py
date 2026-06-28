@@ -73,6 +73,12 @@ async def _process_message(db: AsyncSession, user: User, message: str) -> tuple[
 
 @router.get("/conversations", response_model=list[ConversationResponse])
 async def list_conversations(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """
+    List the authenticated user's conversations ordered by most recently updated.
+    
+    Returns:
+    	(conversations): The user's conversations in descending `updated_at` order.
+    """
     return (await db.execute(select(Conversation).where(Conversation.user_id == user.id).order_by(Conversation.updated_at.desc()))).scalars().all()
 
 
@@ -83,6 +89,15 @@ async def get_messages(
     db: AsyncSession = Depends(get_db),
 ):
     # Check if conversation exists and belongs to the current user
+    """
+    List the messages in a conversation.
+    
+    Parameters:
+    	conversation_id (UUID): The conversation to read.
+    	
+    Returns:
+    	list[MessageResponse]: Messages for the conversation ordered by creation time.
+    """
     convo = (
         await db.execute(
             select(Conversation).where(
@@ -106,11 +121,26 @@ async def get_messages(
 
 @router.get("/state", response_model=EmotionalStateResponse)
 async def get_state(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)) -> EmotionalState:
+    """
+    Get the current user's emotional state.
+    
+    Returns:
+    	EmotionalState: The emotional state record for the authenticated user.
+    """
     return (await db.execute(select(EmotionalState).where(EmotionalState.user_id == user.id))).scalar_one()
 
 
 @router.post("/message", response_model=ChatMessageResponse)
 async def send_message(payload: ChatMessageRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)) -> ChatMessageResponse:
+    """
+    Send a chat message and store the user and bot replies.
+    
+    Parameters:
+        payload (ChatMessageRequest): The message content and optional conversation ID.
+    
+    Returns:
+        ChatMessageResponse: The conversation ID, generated reply, and updated emotional vector.
+    """
     convo = await _resolve_conversation(db=db, user=user, conversation_id=payload.conversation_id, message=payload.message)
 
     # Save user message
@@ -135,6 +165,13 @@ async def send_message(payload: ChatMessageRequest, user: User = Depends(get_cur
 
 @router.get("/stream")
 async def stream_message(message: str = Query(min_length=1, max_length=4000), conversation_id: UUID | None = None, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
+    """
+    Stream a reply for a chat message as server-sent events.
+    
+    Parameters:
+    	message (str): The message text to process.
+    	conversation_id (UUID | None): The conversation to use, or a new conversation is created.
+    """
     convo = await _resolve_conversation(db=db, user=user, conversation_id=conversation_id, message=message)
 
     # Save user message
@@ -145,6 +182,12 @@ async def stream_message(message: str = Query(min_length=1, max_length=4000), co
     await db.commit()
 
     async def event_generator():
+        """
+        Stream a reply as server-sent events and persist the completed bot message.
+        
+        Yields token events for either a safety reply or generated response tokens, then emits a final
+        completion event containing the conversation ID and emotional vector.
+        """
         full_reply = ""
         try:
             if level == RiskLevel.CRITICAL.value or not safe:
