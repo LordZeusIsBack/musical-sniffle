@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from typing import Any
 from app.services.emotion import keyword_score
 
 LABEL_TO_VECTOR: dict[str, list[float]] = {
@@ -15,14 +16,14 @@ class EmotionClassifier:
     """Hybrid local classifier facade for DeBERTa-v3-small-mnli-fever-docnli-ling-2c with keyword fallback."""
 
     def __init__(self) -> None:
-        self._pipe = None
+        self._pipe: Any = None
 
-    def _get_pipeline(self) -> object:
+    def _get_pipeline(self) -> Any:
         if self._pipe is None:
             import torch
             from transformers import pipeline
 
-            model_path = r"C:\Users\ASUS\.hf_models\DeBERTa-v3-small-mnli-fever-docnli-ling-2c"
+            model_path = r"C:\Users\ASUS\.hf_models\DeBERTa-v3-small-mnli-fever-docnli-ling-2c" # nosec
             device = 0 if torch.cuda.is_available() else -1
             self._pipe = pipeline(
                 "zero-shot-classification",
@@ -31,7 +32,7 @@ class EmotionClassifier:
             )
         return self._pipe
 
-    def classify(self, text: str) -> dict[str, object]:
+    def classify(self, text: str) -> dict[str, Any]:
         pipe = self._get_pipeline()
         candidate_labels = ["sadness", "anger", "fear", "joy", "neutral"]
         hypothesis_template = "This text expresses {}."

@@ -166,25 +166,6 @@ async def test_chat_message_creation_and_flow(
     """
     client = auth_client["client"]
     user = auth_client["user"]
-    route_safety = respx.post(f"{settings.ollama_base_url}/chat/completions").mock(
-        side_effect=[
-            Response(
-                status_code=200, json={"choices": [{"message": {"content": "No"}}]}
-            ),
-            Response(
-                status_code=200,
-                json={
-                    "choices": [
-                        {
-                            "message": {
-                                "content": "This is a compassionate AI response to your message."
-                            }
-                        }
-                    ]
-                },
-            ),
-        ]
-    )
     message_payload = {"message": "I feel a bit sad today but I want to talk."}
     response = await client.post("/chat/message", json=message_payload)
     assert response.status_code == 200

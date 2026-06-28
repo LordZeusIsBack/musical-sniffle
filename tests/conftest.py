@@ -11,7 +11,7 @@ import httpx
 from faker import Faker
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 TEST_DB_NAME = "therapy_chatbot_test"
 os.environ["DATABASE_URL"] = (
@@ -19,11 +19,11 @@ os.environ["DATABASE_URL"] = (
 )
 os.environ["ENABLE_DP"] = "false"
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from app.config import settings
-from app.database import get_db, _admin_url
-from app.models import Base, User, EmotionalState
-from app.services.auth import create_access_token, hash_password, pseudonymize
-from app.services.classifier import EmotionClassifier
+from app.config import settings # noqa: E402
+from app.database import get_db, _admin_url # noqa: E402
+from app.models import Base, User, EmotionalState # noqa: E402
+from app.services.auth import create_access_token, hash_password, pseudonymize # noqa: E402
+from app.services.classifier import EmotionClassifier # noqa: E402
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -175,9 +175,6 @@ async def async_db_session() -> AsyncGenerator[AsyncSession, None]:
     """Provides a transactional database session that rolls back after each test."""
     async_test_engine = create_async_engine(
         settings.database_url, echo=False, future=True
-    )
-    async_session_maker = async_sessionmaker(
-        async_test_engine, class_=AsyncSession, expire_on_commit=False
     )
     async with async_test_engine.connect() as connection:
         transaction = await connection.begin()

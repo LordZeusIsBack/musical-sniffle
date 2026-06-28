@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.models import EmotionalState, User
-from app.schemas import LoginRequest, SignupRequest, TokenResponse
+from app.schemas import SignupRequest, TokenResponse
 from app.services.auth import (
     TOKEN_BLACKLIST,
     create_access_token,

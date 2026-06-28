@@ -1,11 +1,9 @@
 from __future__ import annotations
-import random
-from datetime import datetime, timezone, timedelta
+from datetime import timedelta
 import pytest
 import respx
 from httpx import Response
 from freezegun import freeze_time
-from unittest.mock import MagicMock
 from app.config import settings
 from app.services.risk import calculate_risk_score, risk_level, RiskLevel
 from app.services.state_machine import determine_state, EmotionalMode
@@ -15,20 +13,15 @@ from app.services.emotion import (
     EmotionModelConfig,
     update_vector,
     signal_vector,
-    polarity_score,
     negativity_score,
     keyword_score,
 )
 from app.services.auth import (
     create_access_token,
     decode_token,
-    hash_password,
-    verify_password,
-    TOKEN_BLACKLIST,
 )
 from app.services.llm import generate_reply, stream_reply
-from app.services.safety import is_safe, SafetyClassificationError, SAFETY_REPLY
-from app.services.classifier import EmotionClassifier
+from app.services.safety import is_safe
 
 
 def test_risk_engine_logic() -> None:
@@ -48,7 +41,6 @@ def test_risk_engine_logic() -> None:
     med_vector = [0.5, 0.4, 0.2, 0.1]
     assert calculate_risk_score(med_vector) == 0.31
     assert risk_level(0.31) == RiskLevel.MEDIUM
-    high_vector = [0.8, 0.6, 0.5, 0.4]
     assert risk_level(0.58) == RiskLevel.MEDIUM
     assert risk_level(0.6) == RiskLevel.HIGH
     crit_vector = [0.9, 0.9, 0.9, 0.9]
