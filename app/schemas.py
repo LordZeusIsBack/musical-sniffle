@@ -79,3 +79,12 @@ class EventResponse(BaseModel):
     timestamp: datetime
     event_type: str
     payload: dict
+
+
+class MessageResponse(BaseModel):
+    id: UUID
+    conversation_id: UUID
+    role: str
+    content: str
+    created_at: datetime
+

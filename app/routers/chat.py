@@ -5,13 +5,13 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
-from app.models import Conversation, EmotionalState, User
-from app.schemas import ChatMessageRequest, ChatMessageResponse, ConversationResponse, EmotionalStateResponse
+from app.models import Conversation, EmotionalState, User, Message
+from app.schemas import ChatMessageRequest, ChatMessageResponse, ConversationResponse, EmotionalStateResponse, MessageResponse
 from app.services.auth import get_current_user
 from app.services.classifier import EmotionClassifier
 from app.services.emotion import EmotionModelConfig, keyword_score, negativity_score, polarity_score, signal_vector, update_vector
@@ -76,6 +76,34 @@ async def list_conversations(user: User = Depends(get_current_user), db: AsyncSe
     return (await db.execute(select(Conversation).where(Conversation.user_id == user.id).order_by(Conversation.updated_at.desc()))).scalars().all()
 
 
+@router.get("/{conversation_id}/messages", response_model=list[MessageResponse])
+async def get_messages(
+    conversation_id: UUID,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # Check if conversation exists and belongs to the current user
+    convo = (
+        await db.execute(
+            select(Conversation).where(
+                Conversation.id == conversation_id, Conversation.user_id == user.id
+            )
+        )
+    ).scalar_one_or_none()
+    if convo is None:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    # Fetch and return messages sorted by created_at asc
+    messages = (
+        await db.execute(
+            select(Message)
+            .where(Message.conversation_id == conversation_id)
+            .order_by(Message.created_at.asc())
+        )
+    ).scalars().all()
+    return messages
+
+
 @router.get("/state", response_model=EmotionalStateResponse)
 async def get_state(user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)) -> EmotionalState:
     return (await db.execute(select(EmotionalState).where(EmotionalState.user_id == user.id))).scalar_one()
@@ -84,12 +112,23 @@ async def get_state(user: User = Depends(get_current_user), db: AsyncSession = D
 @router.post("/message", response_model=ChatMessageResponse)
 async def send_message(payload: ChatMessageRequest, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)) -> ChatMessageResponse:
     convo = await _resolve_conversation(db=db, user=user, conversation_id=payload.conversation_id, message=payload.message)
+
+    # Save user message
+    user_msg = Message(conversation_id=convo.id, role="user", content=payload.message)
+    db.add(user_msg)
+
     next_vector, level, _mode, memories, safe, _snapshot = await _process_message(db, user, payload.message)
     if level == RiskLevel.CRITICAL.value or not safe:
         reply = SAFETY_REPLY
     else:
         reply = await generate_reply(payload.message, next_vector, memories)
     await emit_event(db, user_id=user.id, event_type=EventType.RESPONSE_GENERATED, payload={"llm_bypassed": level == RiskLevel.CRITICAL.value or not safe})
+
+    # Save AI message
+    bot_msg = Message(conversation_id=convo.id, role="bot", content=reply)
+    db.add(bot_msg)
+
+    convo.updated_at = func.now()
     await db.commit()
     return ChatMessageResponse(conversation_id=convo.id, reply=reply, emotional_vector=next_vector)
 
@@ -97,15 +136,36 @@ async def send_message(payload: ChatMessageRequest, user: User = Depends(get_cur
 @router.get("/stream")
 async def stream_message(message: str = Query(min_length=1, max_length=4000), conversation_id: UUID | None = None, user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)):
     convo = await _resolve_conversation(db=db, user=user, conversation_id=conversation_id, message=message)
+
+    # Save user message
+    user_msg = Message(conversation_id=convo.id, role="user", content=message)
+    db.add(user_msg)
+
     next_vector, level, _mode, memories, safe, _snapshot = await _process_message(db, user, message)
     await db.commit()
 
     async def event_generator():
-        if level == RiskLevel.CRITICAL.value or not safe:
-            yield f"data: {json.dumps({'token': SAFETY_REPLY})}\n\n"
-        else:
-            async for token in stream_reply(message, next_vector, memories):
-                yield f"data: {json.dumps({'token': token})}\n\n"
+        full_reply = ""
+        try:
+            if level == RiskLevel.CRITICAL.value or not safe:
+                full_reply = SAFETY_REPLY
+                yield f"data: {json.dumps({'token': SAFETY_REPLY})}\n\n"
+            else:
+                async for token in stream_reply(message, next_vector, memories):
+                    full_reply += token
+                    yield f"data: {json.dumps({'token': token})}\n\n"
+
+            # Save AI message when stream completes
+            bot_msg = Message(conversation_id=convo.id, role="bot", content=full_reply)
+            db.add(bot_msg)
+            convo.updated_at = func.now()
+            db.add(convo)
+            await db.commit()
+        except Exception as e:
+            await db.rollback()
+            raise e
+
         yield f"data: {json.dumps({'done': True, 'conversation_id': str(convo.id), 'vector': [float(v) for v in next_vector]})}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
+
