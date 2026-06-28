@@ -56,6 +56,10 @@ export async function getEmotionalState() {
   return request("/chat/state");
 }
 
+export async function getMessages(conversationId) {
+  return request(`/chat/${conversationId}/messages`);
+}
+
 export async function sendMessage(message, conversationId = null) {
   const body = { message };
   if (conversationId) body.conversation_id = conversationId;

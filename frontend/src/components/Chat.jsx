@@ -7,6 +7,7 @@ import {
   getEmotionalState,
   logout as apiLogout,
   buildStreamUrl,
+  getMessages,
 } from "../api";
 import MoodBloom from "./MoodBloom";
 import AmbientAura from "./AmbientAura";
@@ -89,6 +90,20 @@ export default function Chat() {
     loadConversations();
     loadEmotionalState();
   }, []);
+
+  // Fetch messages when conversation changes
+  useEffect(() => {
+    if (activeConvoId) {
+      getMessages(activeConvoId)
+        .then((history) => {
+          setMessages(history);
+        })
+        .catch((err) => {
+          console.error("Failed to load message history:", err);
+          setError("Failed to load message history.");
+        });
+    }
+  }, [activeConvoId]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class SignupRequest(BaseModel):
@@ -33,6 +33,8 @@ class ChatMessageResponse(BaseModel):
 
 
 class ConversationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     title: str
     created_at: datetime
@@ -40,11 +42,15 @@ class ConversationResponse(BaseModel):
 
 
 class EmotionalStateResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     vector: list[float]
     updated_at: datetime
 
 
 class EmotionalSnapshotResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     timestamp: datetime
     vector: list[float]
@@ -53,6 +59,8 @@ class EmotionalSnapshotResponse(BaseModel):
 
 
 class HistoryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     history: list[EmotionalSnapshotResponse]
 
 
@@ -69,13 +77,27 @@ class RiskResponse(BaseModel):
 
 
 class ExplanationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     created_at: datetime
     trace: dict
 
 
 class EventResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: UUID
     timestamp: datetime
     event_type: str
     payload: dict
+
+
+class MessageResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    conversation_id: UUID
+    role: str
+    content: str
+    created_at: datetime
