@@ -11,4 +11,7 @@ export default defineConfig({
       "/health": "http://localhost:8000",
     },
   },
+  define: {
+    "import.meta.env.VITE_SESSION_ID": JSON.stringify(Date.now().toString()),
+  },
 });
