@@ -52,14 +52,29 @@ export async function listConversations() {
   return request("/chat/conversations");
 }
 
+/**
+ * Retrieves the current chat emotional state.
+ * @return {Promise<any>} The emotional state response.
+ */
 export async function getEmotionalState() {
   return request("/chat/state");
 }
 
+/**
+ * Retrieves the messages for a conversation.
+ * @param {string|number} conversationId - The conversation identifier.
+ * @return {Promise<any>} The conversation messages.
+ */
 export async function getMessages(conversationId) {
   return request(`/chat/${conversationId}/messages`);
 }
 
+/**
+ * Sends a chat message.
+ * @param {string} message - The message text to send.
+ * @param {string|number|null} [conversationId=null] - The conversation to send the message to.
+ * @return {Promise<any>} The response data from the message request.
+ */
 export async function sendMessage(message, conversationId = null) {
   const body = { message };
   if (conversationId) body.conversation_id = conversationId;

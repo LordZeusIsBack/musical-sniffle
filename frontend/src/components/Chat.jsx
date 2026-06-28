@@ -66,6 +66,9 @@ function StarterChip({ label, onClick }) {
   );
 }
 
+/**
+ * Renders the chat interface and conversation sidebar.
+ */
 export default function Chat() {
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
