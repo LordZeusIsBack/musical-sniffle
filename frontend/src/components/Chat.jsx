@@ -66,6 +66,9 @@ function StarterChip({ label, onClick }) {
   );
 }
 
+/**
+ * Renders the main chat interface with conversation history, message streaming, mood state, and navigation.
+ */
 export default function Chat() {
   const navigate = useNavigate();
   const messagesEndRef = useRef(null);
